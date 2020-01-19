@@ -1,0 +1,64 @@
+---
+title: "Working with MySQL in R"
+author: "Illarion  Jabine"
+date: "19/01/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+Before you begin you might need to execute this SQL in MySQL:
+
+ALTER USER 'username'@'localhost'
+IDENTIFIED WITH mysql_native_password BY 'password'
+
+
+```{r MySQL connection}
+library(RMySQL)
+db_user <- 'root'
+db_password <- 'test'
+db_name <- 'test'
+db_table <- 'test_table1'
+db_host <- '127.0.0.1' # for local access
+db_port <- 3306
+mydb <-  dbConnect(MySQL(), user = db_user, password = db_password,
+                   dbname = db_name, host = db_host, port = db_port)
+```
+
+```{r SQL: create table, insert values and select}
+# SQL create table
+create_sql <- paste0("CREATE TABLE ",paste0(db_table)," (`test_column` INT NULL)")
+dbSendQuery(mydb, create_sql)
+
+# SQL insert
+for (i in 1:100) {
+insert_sql <- paste0("insert into ",paste0(db_table)," values(",paste0(i),")")
+dbGetQuery(mydb, insert_sql)
+}
+
+# SQL select
+select_sql <- paste0("select * from ", db_table)
+res <- dbSendQuery(mydb, select_sql)
+df <-  fetch(res, n = -1)
+on.exit(dbDisconnect(mydb))
+
+```
+
+With dbWriteTable() we can write an R dataframe directly into MySQL.
+This function will automatically create an SQL tabl definition and insert the value.
+Make sure that you enable "local-infile" parameter in "C:\ProgramData\MySQL\MySQL Server 8.0\my.ini" file 
+[mysqld]
+local-infile=1
+
+```{r writing a whole dataframe}
+# Write a whole dataframe into db
+dbWriteTable(mydb, "mtcars", mtcars)
+dbReadTable(mydb, "mtcars")
+```
+
+
+
+
