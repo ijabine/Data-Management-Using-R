@@ -43,7 +43,8 @@ dbGetQuery(mydb, insert_sql)
 select_sql <- paste0("select * from ", db_table)
 res <- dbSendQuery(mydb, select_sql)
 df <-  fetch(res, n = -1)
-on.exit(dbDisconnect(mydb))
+dbClearResult(res)
+dbDisconnect(mydb)
 
 ```
 
